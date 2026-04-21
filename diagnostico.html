@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diagnóstico - Dashboard Operacional</title>
+<script src="config.js"></script>
+<style>
+  body{font-family:monospace;background:#0a0e1a;color:#e2e8f0;padding:40px;line-height:1.8}
+  .box{background:#1a1f2e;border:1px solid #2a3f5f;border-radius:8px;padding:20px;margin:20px 0}
+  .ok{color:#00e676}.err{color:#ff3d5a}.warn{color:#ffd600}
+  h1{color:#00d4ff;font-size:24px;margin-bottom:10px}
+  h2{color:#00d4ff;font-size:18px;margin:20px 0 10px}
+  button{background:#00d4ff;border:none;color:#000;padding:10px 20px;border-radius:6px;cursor:pointer;font-weight:bold;margin:10px 5px 0 0}
+  button:hover{background:#00a3c4}
+  pre{background:#0d1320;padding:15px;border-radius:6px;overflow-x:auto;border:1px solid #1e2d45}
+  .status{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:8px}
+  a{color:#00d4ff;text-decoration:none}
+  a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+
+<h1>🔍 Diagnóstico do Dashboard Operacional</h1>
+
+<div class="box">
+  <h2>1. Verificação de Protocolo</h2>
+  <p><strong>Protocolo atual:</strong> <span id="protocol"></span></p>
+  <p><strong>URL completa:</strong> <span id="fullUrl"></span></p>
+  <p><strong>Origem:</strong> <span id="origin"></span></p>
+  <div id="protocolStatus"></div>
+</div>
+
+<div class="box">
+  <h2>2. Teste de Conexão com Google Apps Script</h2>
+  <p><strong>URL configurada:</strong></p>
+  <pre id="gasUrl">https://script.google.com/macros/s/AKfycbxDBXIM3G3hlrkl4YZMhb2ZZjtUp6OndK_cmP9P1xjdV760e3a9IDQJ9860H18c-s7j/exec</pre>
+  <button onclick="testJsonp()">🧪 Testar JSONP</button>
+  <button onclick="testFetch()">🧪 Testar Fetch</button>
+  <button onclick="testBoth()">🧪 Testar Ambos</button>
+  <div id="testResult"></div>
+</div>
+
+<div class="box">
+  <h2>3. Informações do Navegador</h2>
+  <p><strong>User Agent:</strong> <span id="userAgent"></span></p>
+  <p><strong>Cookies habilitados:</strong> <span id="cookies"></span></p>
+  <p><strong>JavaScript:</strong> <span class="ok">✓ Habilitado</span></p>
+</div>
+
+<div class="box">
+  <h2>4. Ações Recomendadas</h2>
+  <div id="recommendations"></div>
+</div>
+
+<div class="box">
+  <h2>5. Abrir Dashboard</h2>
+  <p>Se todos os testes passarem, clique abaixo:</p>
+  <button onclick="window.location.href='dashboard_operacional.html'">🚀 Abrir Dashboard</button>
+  <button onclick="window.location.href='http://localhost:8080/dashboard_operacional.html'">🚀 Abrir via Localhost</button>
+</div>
+
+<script>
+// 1. Verificar protocolo
+document.getElementById('protocol').textContent = window.location.protocol;
+document.getElementById('fullUrl').textContent = window.location.href;
+document.getElementById('origin').textContent = window.location.origin;
+
+const isFile = window.location.protocol === 'file:';
+const isHttp = window.location.protocol.startsWith('http');
+
+let protocolHtml = '';
+if (isFile) {
+  protocolHtml = '<p class="err">❌ PROBLEMA DETECTADO: Você está abrindo o arquivo diretamente (file://)</p>';
+  protocolHtml += '<p class="warn">⚠️ JSONP pode não funcionar com file://</p>';
+  protocolHtml += '<p class="ok">✅ SOLUÇÃO: Use um servidor HTTP local</p>';
+} else if (isHttp) {
+  protocolHtml = '<p class="ok">✅ Protocolo correto: HTTP/HTTPS</p>';
+} else {
+  protocolHtml = '<p class="warn">⚠️ Protocolo desconhecido</p>';
+}
+document.getElementById('protocolStatus').innerHTML = protocolHtml;
+
+// 2. Informações do navegador
+document.getElementById('userAgent').textContent = navigator.userAgent;
+document.getElementById('cookies').innerHTML = navigator.cookieEnabled ? '<span class="ok">✓ Sim</span>' : '<span class="err">✗ Não</span>';
+
+// 3. Recomendações
+let recommendations = '';
+if (isFile) {
+  recommendations = `
+    <p class="warn"><strong>⚠️ Você precisa usar um servidor HTTP!</strong></p>
+    <p><strong>Opção 1 - Python (Recomendado):</strong></p>
+    <pre>python -m http.server 8080</pre>
+    <p>Depois acesse: <a href="http://localhost:8080/dashboard_operacional.html">http://localhost:8080/dashboard_operacional.html</a></p>
+    
+    <p><strong>Opção 2 - Node.js:</strong></p>
+    <pre>npx http-server -p 8080</pre>
+    
+    <p><strong>Opção 3 - VS Code:</strong></p>
+    <p>Instale a extensão "Live Server" e clique com botão direito → "Open with Live Server"</p>
+  `;
+} else {
+  recommendations = '<p class="ok">✅ Tudo certo! Você pode testar a conexão abaixo.</p>';
+}
+document.getElementById('recommendations').innerHTML = recommendations;
+
+// Funções de teste
+function testJsonp() {
+  const result = document.getElementById('testResult');
+  result.innerHTML = '<p class="warn">🔄 Testando JSONP...</p>';
+  
+  const cbName = 'test_' + Date.now();
+  const script = document.createElement('script');
+  const timer = setTimeout(() => {
+    cleanup();
+    result.innerHTML = '<p class="err">❌ JSONP Timeout (10s)</p><p>O script não respondeu a tempo.</p>';
+  }, 10000);
+  
+  function cleanup() {
+    clearTimeout(timer);
+    delete window[cbName];
+    if (script.parentNode) script.parentNode.removeChild(script);
+  }
+  
+  window[cbName] = (data) => {
+    cleanup();
+    result.innerHTML = `
+      <p class="ok">✅ JSONP funcionou!</p>
+      <p><strong>Resposta:</strong></p>
+      <pre>${JSON.stringify(data, null, 2)}</pre>
+    `;
+  };
+  
+  script.onerror = () => {
+    cleanup();
+    result.innerHTML = `
+      <p class="err">❌ JSONP falhou!</p>
+      <p>Possíveis causas:</p>
+      <ul>
+        <li>Você está usando file:// (precisa de servidor HTTP)</li>
+        <li>Bloqueio de CORS</li>
+        <li>URL incorreta</li>
+      </ul>
+    `;
+  };
+  
+  script.src = GAS_URL + '?action=lastUpdate&callback=' + cbName;
+  document.head.appendChild(script);
+}
+
+async function testFetch() {
+  const result = document.getElementById('testResult');
+  result.innerHTML = '<p class="warn">🔄 Testando Fetch...</p>';
+  
+  try {
+    const response = await fetch(GAS_URL + '?action=lastUpdate');
+    const data = await response.json();
+    result.innerHTML = `
+      <p class="ok">✅ Fetch funcionou!</p>
+      <p><strong>Status:</strong> ${response.status}</p>
+      <p><strong>Resposta:</strong></p>
+      <pre>${JSON.stringify(data, null, 2)}</pre>
+    `;
+  } catch (err) {
+    result.innerHTML = `
+      <p class="err">❌ Fetch falhou!</p>
+      <p><strong>Erro:</strong> ${err.message}</p>
+      <p>Isso é esperado se você estiver usando file://</p>
+    `;
+  }
+}
+
+async function testBoth() {
+  const result = document.getElementById('testResult');
+  result.innerHTML = '<p class="warn">🔄 Testando JSONP e Fetch...</p>';
+  
+  // Testa JSONP primeiro
+  await new Promise(resolve => {
+    const cbName = 'test_' + Date.now();
+    const script = document.createElement('script');
+    const timer = setTimeout(() => {
+      cleanup();
+      result.innerHTML += '<p class="err">❌ JSONP: Timeout</p>';
+      resolve();
+    }, 10000);
+    
+    function cleanup() {
+      clearTimeout(timer);
+      delete window[cbName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+    }
+    
+    window[cbName] = (data) => {
+      cleanup();
+      result.innerHTML += `<p class="ok">✅ JSONP: OK - ${JSON.stringify(data)}</p>`;
+      resolve();
+    };
+    
+    script.onerror = () => {
+      cleanup();
+      result.innerHTML += '<p class="err">❌ JSONP: Falhou</p>';
+      resolve();
+    };
+    
+    script.src = GAS_URL + '?action=lastUpdate&callback=' + cbName;
+    document.head.appendChild(script);
+  });
+  
+  // Testa Fetch
+  try {
+    const response = await fetch(GAS_URL + '?action=lastUpdate');
+    const data = await response.json();
+    result.innerHTML += `<p class="ok">✅ Fetch: OK - ${JSON.stringify(data)}</p>`;
+  } catch (err) {
+    result.innerHTML += `<p class="err">❌ Fetch: ${err.message}</p>`;
+  }
+  
+  result.innerHTML += '<hr><p><strong>Conclusão:</strong> Se pelo menos um método funcionou, o dashboard deve funcionar!</p>';
+}
+
+// Auto-teste ao carregar
+if (isHttp) {
+  setTimeout(() => {
+    console.log('🔄 Executando auto-teste...');
+    testBoth();
+  }, 1000);
+}
+</script>
+
+</body>
+</html>

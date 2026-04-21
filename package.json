@@ -1,0 +1,13 @@
+{
+  "name": "dashboard-operacional",
+  "version": "1.0.0",
+  "description": "Dashboard Operacional - Monitoramento de Posições",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m http.server $PORT",
+    "dev": "python -m http.server 8080"
+  },
+  "keywords": ["dashboard", "operacional", "monitoramento"],
+  "author": "",
+  "license": "MIT"
+}
