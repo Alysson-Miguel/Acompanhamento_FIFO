@@ -1,6 +1,6 @@
 const ZONAS=['ZONA BUFFER EHA','ZONA BUFFER EHA VOLUMOSO','ZONA COP','ZONA LMH','ZONA VOLUMOSO','ZONA LINEAR'];
 const ZONA_COLORS={'ZONA BUFFER EHA':'#00d4ff','ZONA BUFFER EHA VOLUMOSO':'#ff6b2b','ZONA COP':'#00e676','ZONA LMH':'#ffd600','ZONA VOLUMOSO':'#b388ff','ZONA LINEAR':'#ff4081'};
-const TURNO_HORARIO={'1':{label:'Turno 1 (06h–14h)',horas:['06','07','08','09','10','11','12','13']},'2':{label:'Turno 2 (14h–22h)',horas:['14','15','16','17','18','19','20','21']},'3':{label:'Turno 3 (22h–06h)',horas:['22','23','00','01','02','03','04','05']}};
+const TURNO_HORARIO={'1':{label:'Turno 1 (05:25–15:13)',horas:['05','06','07','08','09','10','11','12','13','14']},'2':{label:'Turno 2 (15:14–22:59)',horas:['15','16','17','18','19','20','21','22']},'3':{label:'Turno 3 (23:00–05:24)',horas:['23','00','01','02','03','04']}};
 let rawData=[],filteredData=[],backlogData=[],charts={},zonaCharts={},gasUrl='';
 
 // Registra o plugin de datalabels após carregar
